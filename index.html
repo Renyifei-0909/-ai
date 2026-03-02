@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI智剪</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- 顶部导航：单页多视图切换 -->
+        <header class="top-nav">
+            <div class="brand">AI智剪</div>
+            <nav class="nav-tabs">
+                <button type="button" class="nav-tab active" data-view="index">智能索引</button>
+                <button type="button" class="nav-tab" data-view="smartcut">智能剪辑</button>
+                <button type="button" class="nav-tab" data-view="library">素材库</button>
+                <button type="button" class="nav-tab" data-view="drafts">草稿箱</button>
+                <button type="button" class="nav-tab" data-view="settings">设置</button>
+            </nav>
+        </header>
+
+        <main class="main-layout">
+            <!-- 视图一：智能索引（主界面） -->
+            <section class="view view-index view-active">
+                <section class="panel panel-preview" style="flex:2;">
+                    <div class="preview-area" id="previewArea">
+                        <div class="preview-placeholder" id="previewPlaceholder">导入素材后在此预览</div>
+                    </div>
+                    <div class="preview-footer">
+                        <button type="button" class="btn-text" id="btnImport">导入素材</button>
+                        <button type="button" class="btn-text" id="btnExport">导出视频</button>
+                        <span class="analysis-desc" id="analysisDesc">—</span>
+                        <span class="time-display" id="timeDisplay">00:00 / 00:00</span>
+                        <button type="button" class="btn-text" id="btnPlay">▶ 预览</button>
+                    </div>
+                    <!-- 视频下方索引条（保持不变） -->
+                    <div class="index-strip">
+                        <div class="index-time" id="indexTime">00:00 / 00:00</div>
+                        <div class="index-bar" id="indexBar"></div>
+                    </div>
+                </section>
+
+                <!-- 右侧智能搜索面板，风格类似示例图 -->
+                <aside class="panel panel-smart">
+                    <div class="panel-head">智能搜索</div>
+                    <div class="panel-body">
+                        <div class="field">
+                            <label>搜索描述</label>
+                            <textarea class="select" id="searchText" rows="3" placeholder="描述你要查找的视频片段，例如：小女孩在公园跑步"></textarea>
+                        </div>
+                        <div class="field" style="display:flex; gap:8px;">
+                            <button type="button" class="btn primary" id="btnSearch">智能搜索</button>
+                            <button type="button" class="btn" id="btnSearchClear">清除</button>
+                        </div>
+                        <div class="field">
+                            <label>搜索历史</label>
+                            <ul id="searchHistory" style="list-style:none;padding:0;margin:0;font-size:12px;color:var(--text-muted);"></ul>
+                        </div>
+                        <div class="field">
+                            <label>搜索结果</label>
+                            <ul id="searchResults" style="list-style:none;padding:0;margin:0;font-size:12px;color:var(--text);"></ul>
+                        </div>
+                    </div>
+                </aside>
+            </section>
+
+            <!-- 视图二：智能剪辑（使用原智能面板元素） -->
+            <section class="view view-smartcut">
+                <section class="panel" style="flex:1;">
+                    <div class="panel-head">智能剪辑</div>
+                    <div class="panel-body">
+                        <div class="field">
+                            <label>模板</label>
+                            <select class="select" id="paramTemplate">
+                                <option value="beat">卡点节奏</option>
+                                <option value="subtitle">自动字幕</option>
+                                <option value="watermark">去水印</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label>时长 <span id="paramDurationValue">60</span> 秒</label>
+                            <input type="range" class="slider" id="paramDuration" min="10" max="300" value="60" step="5">
+                        </div>
+                        <div class="field">
+                            <label>背景音乐</label>
+                            <select class="select" id="paramBgm">
+                                <option value="">无</option>
+                                <option value="light">轻快</option>
+                                <option value="calm">舒缓</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label>分辨率</label>
+                            <select class="select" id="paramResolution">
+                                <option value="1080p">1080P</option>
+                                <option value="720p">720P</option>
+                                <option value="4k">4K</option>
+                            </select>
+                        </div>
+                        <button type="button" class="btn primary block" id="btnGenerate">智能生成</button>
+                        <div class="field">
+                            <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+                            <span class="progress-text" id="progressText">就绪</span>
+                        </div>
+                    </div>
+                </section>
+            </section>
+
+            <!-- 视图三：素材库页：复用素材列表模块 -->
+            <section class="view view-library">
+                <aside class="panel panel-assets" style="flex:1;">
+                    <div class="panel-head">素材库</div>
+                    <div class="asset-tags">
+                        <button type="button" class="tag active" data-type="all">全部</button>
+                        <button type="button" class="tag" data-type="video">视频</button>
+                        <button type="button" class="tag" data-type="audio">音频</button>
+                        <button type="button" class="tag" data-type="image">图片</button>
+                    </div>
+                    <div class="asset-dropzone" id="assetDropzone">拖拽或点击导入</div>
+                    <ul class="asset-list" id="assetList"></ul>
+                </aside>
+            </section>
+
+            <!-- 视图四：草稿箱页（占位） -->
+            <section class="view view-drafts">
+                <div class="panel" style="flex:1; align-items:center; justify-content:center;">
+                    <div style="padding:24px; color:var(--text-muted);">这里是「草稿箱」，用于保存尚未导出的剪辑工程。</div>
+                </div>
+            </section>
+
+            <!-- 视图五：设置页（占位） -->
+            <section class="view view-settings">
+                <div class="panel" style="flex:1; align-items:center; justify-content:center;">
+                    <div style="padding:24px; color:var(--text-muted);">这里是「设置」页面，可配置导出路径、默认分辨率等。</div>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="js/main.js"></script>
+</body>
+</html>

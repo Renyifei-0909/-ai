@@ -1,0 +1,33 @@
+{
+  "name": "ai-video-editor",
+  "version": "0.1.0",
+  "description": "AI 剪辑桌面应用（前端 JS，后端 Python）",
+  "main": "electron/main.js",
+  "scripts": {
+    "dev": "vite",
+    "pack:copy": "node scripts/copy-static.js",
+    "electron:dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && electron .\"",
+    "electron:build": "npm run pack:copy && electron-builder"
+  },
+  "build": {
+    "appId": "com.ai-video-editor.app",
+    "productName": "AI智剪",
+    "directories": { "output": "release" },
+    "files": ["dist/**", "electron/**", "backend/**"],
+    "asarUnpack": ["**/backend/**", "**/dist/**"],
+    "mac": { "category": "public.app-category.video", "target": ["dmg"] },
+    "win": { "target": ["nsis"] }
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.2.1",
+    "concurrently": "^8.2.2",
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1",
+    "vite": "^5.0.8",
+    "wait-on": "^7.2.0"
+  }
+}
