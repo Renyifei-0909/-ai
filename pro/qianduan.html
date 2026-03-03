@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI智剪 · 主界面（素材库可导入视频）</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* 后备样式：确保布局与示例图风格类似，同时不依赖外部文件 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background: #1e1e2f;
+            color: #e0e0e0;
+        }
+
+        #app {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 1600px;
+            margin: 0 auto;
+            border-left: 1px solid #2d2d3a;
+            border-right: 1px solid #2d2d3a;
+            background: #1a1a28;
+        }
+
+        .top-nav {
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            background: #252537;
+            border-bottom: 1px solid #2f2f44;
+            height: 60px;
+        }
+
+        .brand {
+            font-size: 1.5rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #a78bfa, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-right: 40px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-tab {
+            background: transparent;
+            border: none;
+            padding: 8px 18px;
+            color: #aaa;
+            font-size: 1rem;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-weight: 500;
+        }
+
+        .nav-tab.active {
+            background: #3a3a52;
+            color: white;
+        }
+
+        .nav-tab:hover {
+            color: white;
+            background: #323248;
+        }
+
+        .main-layout {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .view {
+            display: none;
+            width: 100%;
+            height: 100%;
+        }
+
+        .view-active {
+            display: flex;
+        }
+
+        /* 面板通用 */
+        .panel {
+            background: #252537;
+            border-radius: 16px;
+            margin: 16px;
+            padding: 16px;
+            overflow-y: auto;
+            border: 1px solid #2f2f44;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .panel-preview {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-smart {
+            flex: 1;
+            min-width: 280px;
+        }
+
+        .preview-area {
+            background: #0f0f1a;
+            border-radius: 12px;
+            aspect-ratio: 16/9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+            border: 1px solid #3a3a52;
+            overflow: hidden;
+            /* 保证视频不溢出圆角 */
+        }
+
+        .preview-placeholder {
+            color: #6a6a8b;
+            font-size: 1rem;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .preview-footer {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .preview-row {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-text {
+            background: transparent;
+            border: 1px solid #42425c;
+            color: #ccc;
+            padding: 6px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: 0.2s;
+        }
+
+        .btn-text:hover {
+            background: #323248;
+        }
+
+        /* 小号按钮用于清除 */
+        .btn-text-small {
+            padding: 2px 10px;
+            font-size: 0.8rem;
+        }
+
+        .time-display {
+            color: #8a8ab0;
+            font-size: 0.9rem;
+        }
+
+        .index-strip {
+            background: #1e1e30;
+            border-radius: 40px;
+            height: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 8px;
+        }
+
+        .index-time {
+            font-size: 0.8rem;
+            color: #7a7aa5;
+        }
+
+        .index-bar {
+            flex: 1;
+            height: 4px;
+            background: #3a3a55;
+            border-radius: 4px;
+            position: relative;
+        }
+
+        /* 自定义进度填充 */
+        .index-bar-fill {
+            height: 100%;
+            background: #a78bfa;
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.1s;
+        }
+
+        /* 右侧智能检索面板 */
+        .panel-head {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #ddd;
+            border-left: 4px solid #a78bfa;
+            padding-left: 12px;
+        }
+
+        .field {
+            margin-bottom: 20px;
+        }
+
+        .field-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .field-header label {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        .select,
+        textarea,
+        input[type="text"].select {
+            width: 100%;
+            background: #1e1e30;
+            border: 1px solid #3a3a55;
+            border-radius: 12px;
+            padding: 10px 12px;
+            color: white;
+            font-size: 0.9rem;
+            resize: vertical;
+        }
+
+        .select option {
+            background: #252537;
+        }
+
+        .btn {
+            background: #32324a;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 30px;
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn.primary {
+            background: linear-gradient(145deg, #6d5ac9, #b23b8c);
+        }
+
+        .btn.primary:hover {
+            filter: brightness(1.1);
+        }
+
+        .btn.block {
+            width: 100%;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 8px 0 0;
+            background: #1e1e30;
+            border-radius: 12px;
+            padding: 8px;
+        }
+
+        li {
+            padding: 6px 8px;
+            border-bottom: 1px solid #2d2d42;
+            font-size: 0.9rem;
+        }
+
+        li:last-child {
+            border-bottom: none;
+        }
+
+        /* 占位列表项样式 */
+        li.placeholder {
+            color: #8a8ab0;
+            font-style: italic;
+            text-align: center;
+            border-bottom: none;
+        }
+
+        .progress-bar {
+            background: #2d2d42;
+            height: 8px;
+            border-radius: 10px;
+            width: 100%;
+        }
+
+        .progress-fill {
+            width: 0%;
+            height: 8px;
+            background: #a78bfa;
+            border-radius: 10px;
+        }
+
+        .progress-text {
+            font-size: 0.8rem;
+            color: #8a8ab0;
+            margin-left: 8px;
+        }
+
+        .asset-tags {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .tag {
+            background: #2a2a3c;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 30px;
+            color: #aaa;
+            cursor: pointer;
+        }
+
+        .tag.active {
+            background: #4a4a6a;
+            color: white;
+        }
+
+        .asset-dropzone {
+            background: #1e1e30;
+            border: 2px dashed #4a4a6a;
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            margin-bottom: 16px;
+            color: #8a8ab0;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .asset-dropzone:hover {
+            background: #25253a;
+            border-color: #a78bfa;
+        }
+
+        .asset-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .asset-list li {
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .asset-list li:hover {
+            background: #2a2a40;
+        }
+        .asset-list .asset-type-icon {
+            margin-right: 6px;
+        }
+        .asset-list .asset-duration {
+            color: #8a8ab0;
+            font-size: 0.8rem;
+        }
+        /* 示例条目样式 (灰色斜体) */
+        .asset-list li.example-item {
+            color: #aaa;
+            font-style: italic;
+        }
+        .asset-list li.example-item .asset-duration {
+            color: #6a6a8b;
+        }
+
+        /* 一键导出区域 */
+        .export-rule-note {
+            font-size: 0.8rem;
+            color: #9a9ac0;
+            margin-top: 6px;
+        }
+
+        /* 草稿箱列表样式 - 每项可点击 */
+        #draftsList {
+            max-height: 400px;
+            overflow-y: auto;
+            background: transparent;
+            padding: 0;
+        }
+        #draftsList li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #1e1e30;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            padding: 10px 12px;
+            border-bottom: none;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        #draftsList li:hover {
+            background: #2a2a40;
+        }
+        .draft-name {
+            font-weight: 500;
+            pointer-events: none; /* 点击由li处理 */
+        }
+        .draft-time {
+            font-size: 0.8rem;
+            color: #8a8ab0;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <!-- 顶部导航：素材库 / 草稿箱 / 智能检索 / 智能剪辑 / 设置 -->
+        <header class="top-nav">
+            <div class="brand">AI智剪</div>
+            <nav class="nav-tabs">
+                <button type="button" class="nav-tab" data-view="library">素材库</button>
+                <button type="button" class="nav-tab" data-view="drafts">草稿箱</button>
+                <button type="button" class="nav-tab active" data-view="index">智能检索</button>
+                <button type="button" class="nav-tab" data-view="smartcut">智能剪辑</button>
+                <button type="button" class="nav-tab" data-view="settings">设置</button>
+            </nav>
+        </header>
+
+        <main class="main-layout">
+            <!-- 视图一：素材库（已增强：可导入并存储视频） -->
+            <section class="view view-library">
+                <aside class="panel panel-assets" style="flex:1;">
+                    <div class="panel-head">📁 素材库 (点击条目预览)</div>
+                    <div class="asset-tags" id="assetTags">
+                        <button type="button" class="tag active" data-type="all">全部</button>
+                        <button type="button" class="tag" data-type="video">视频</button>
+                        <button type="button" class="tag" data-type="audio">音频</button>
+                        <button type="button" class="tag" data-type="image">图片</button>
+                    </div>
+                    <div class="asset-dropzone" id="assetDropzone">
+                        📂 拖拽或点击导入素材 (支持视频、音频、图片)
+                    </div>
+                    <ul class="asset-list" id="assetList">
+                        <!-- 动态渲染由JS完成 -->
+                    </ul>
+                </aside>
+            </section>
+
+            <!-- 视图二：草稿箱（可点击播放） -->
+            <section class="view view-drafts">
+                <div class="panel" style="flex:1; display: flex; flex-direction: column;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <div class="panel-head" style="margin-bottom: 0;">📁 草稿箱 (点击条目播放)</div>
+                        <button type="button" class="btn-text" id="clearDraftsBtn">清除所有</button>
+                    </div>
+                    <ul id="draftsList">
+                        <!-- 草稿项会动态插入到这里，点击li会触发播放 -->
+                    </ul>
+                    <div id="draftsPlaceholder" style="color: #9a9ac0; text-align: center; padding: 40px; display: none;">暂无草稿</div>
+                </div>
+            </section>
+
+            <!-- 视图三：智能检索（核心） -->
+            <section class="view view-index view-active">
+                <section class="panel panel-preview" style="flex:2;">
+                    <div class="preview-area" id="previewArea">
+                        <div class="preview-placeholder" id="previewPlaceholder">导入素材或点击草稿箱/素材库条目播放</div>
+                    </div>
+                    <div class="preview-footer">
+                        <!-- 第一行：导入/导出按钮 -->
+                        <div class="preview-row">
+                            <button type="button" class="btn-text" id="btnImport">📂 导入素材</button>
+                            <button type="button" class="btn-text" id="btnExport">⬇ 导出当前片段</button>
+                        </div>
+                        <!-- 第二行：时间显示 + 预览按钮 -->
+                        <div class="preview-row">
+                            <span class="time-display" id="timeDisplay">00:00 / 00:00</span>
+                            <button type="button" class="btn-text" id="btnPlay">▶ 预览</button>
+                        </div>
+                    </div>
+                    <!-- 视频下方索引条 -->
+                    <div class="index-strip">
+                        <div class="index-time" id="indexTime">00:00 / 00:00</div>
+                        <div class="index-bar" id="indexBar">
+                            <div class="index-bar-fill" id="indexBarFill"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 右侧智能检索面板 -->
+                <aside class="panel panel-smart">
+                    <div class="panel-head">🔍 智能检索</div>
+                    <div class="panel-body">
+                        <div class="field">
+                            <label>搜索描述</label>
+                            <textarea class="select" id="searchText" rows="3"
+                                placeholder="例如：小朋友们在搭积木"></textarea>
+                        </div>
+                        <div class="field" style="display:flex; gap:8px;">
+                            <button type="button" class="btn primary" id="btnSearch">智能搜索</button>
+                            <button type="button" class="btn" id="btnSearchClear">清除</button>
+                        </div>
+
+                        <!-- 搜索历史区块，带清除按钮 -->
+                        <div class="field">
+                            <div class="field-header">
+                                <label>搜索历史</label>
+                                <button type="button" class="btn-text btn-text-small" id="clearHistoryBtn">清除</button>
+                            </div>
+                            <ul id="searchHistory">
+                                <!-- 初始为空，由JS填充占位文本 -->
+                            </ul>
+                        </div>
+
+                        <!-- 搜索结果区块，带清除按钮 -->
+                        <div class="field">
+                            <div class="field-header">
+                                <label id="resultsLabel">搜索结果 (共0个片段)</label>
+                                <button type="button" class="btn-text btn-text-small" id="clearResultsBtn">清除</button>
+                            </div>
+                            <ul id="searchResults">
+                                <!-- 初始为空，由JS填充占位文本 -->
+                            </ul>
+                        </div>
+
+                        <!-- 一键导出区域 -->
+                        <div class="field" style="margin-top: 20px; border-top: 1px solid #3a3a55; padding-top: 16px;">
+                            <button type="button" class="btn primary block" id="btnOneClickExport"
+                                style="font-size: 1rem; padding: 12px;">⚡ 一键导出所有片段</button>
+                            <p class="export-rule-note">
+                                ⚙️ 命名规则：片段1/2/3… <br>
+                                (例如："片段1", "片段2")
+                            </p>
+                        </div>
+                    </div>
+                </aside>
+            </section>
+
+            <!-- 视图四：智能剪辑 -->
+            <section class="view view-smartcut">
+                <section class="panel" style="flex:1;">
+                    <div class="panel-head">⚡ 智能剪辑</div>
+                    <div class="panel-body">
+                        <div class="field">
+                            <label>模板</label>
+                            <input type="text" class="select" id="paramTemplate" placeholder="例如：卡点节奏" value="卡点节奏">
+                        </div>
+                        <div class="field">
+                            <label>时长 <span id="paramDurationValue">60</span> 秒</label>
+                            <input type="range" class="slider" id="paramDuration" min="10" max="300" value="60"
+                                step="5">
+                        </div>
+                        <div class="field">
+                            <label>背景音乐</label>
+                            <input class="select" id="paramBgm" value="无">
+                        </div>
+                        <div class="field">
+                            <label>分辨率</label>
+                            <select class="select" id="paramResolution">
+                                <option value="1080p">1080P</option>
+                                <option value="720p">720P</option>
+                                <option value="4k">4K</option>
+                            </select>
+                        </div>
+                        <button type="button" class="btn primary block" id="btnGenerate">智能生成</button>
+                        <div class="field">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="progressFill" style="width:45%;"></div>
+                            </div>
+                            <span class="progress-text" id="progressText">处理中 45%</span>
+                        </div>
+                    </div>
+                </section>
+            </section>
+
+            <!-- 视图五：设置页 -->
+            <section class="view view-settings">
+                <div class="panel" style="flex:1; align-items:center; justify-content:center;">
+                    <div style="padding:24px; color:#9a9ac0;">⚙️ 设置 — 导出路径、默认分辨率、快捷键等</div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        (function () {
+            // ---------- 视图切换逻辑 ----------
+            const navTabs = document.querySelectorAll('.nav-tab');
+            const views = document.querySelectorAll('.view');
+
+            function switchView(viewName) {
+                views.forEach(v => v.classList.remove('view-active'));
+                const targetView = document.querySelector('.view-' + viewName);
+                if (targetView) targetView.classList.add('view-active');
+
+                navTabs.forEach(btn => btn.classList.remove('active'));
+                const activeBtn = document.querySelector(`.nav-tab[data-view="${viewName}"]`);
+                if (activeBtn) activeBtn.classList.add('active');
+            }
+
+            navTabs.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const viewName = btn.getAttribute('data-view');
+                    switchView(viewName);
+                });
+            });
+
+            // ---------- 全局预览核心 ----------
+            const previewArea = document.getElementById('previewArea');
+            const timeDisplay = document.getElementById('timeDisplay');
+            const indexTime = document.getElementById('indexTime');
+            const indexBarFill = document.getElementById('indexBarFill');
+            const btnPlay = document.getElementById('btnPlay');
+
+            let currentVideo = null;          // 当前播放的video元素
+            let currentVideoUrl = null;        // 对应的blob url
+            let currentFileName = '';           // 当前文件名
+
+            // 释放之前的视频资源
+            function releaseCurrentVideo() {
+                if (currentVideo) {
+                    currentVideo.pause();
+                    currentVideo.removeAttribute('src');
+                    currentVideo.load();
+                    currentVideo = null;
+                }
+                if (currentVideoUrl) {
+                    URL.revokeObjectURL(currentVideoUrl);
+                    currentVideoUrl = null;
+                }
+                // 重置预览区占位（但不立即清空，调用者决定）
+            }
+
+            // 格式化时间
+            function formatTime(seconds) {
+                if (isNaN(seconds)) return '00:00';
+                const mins = Math.floor(seconds / 60);
+                const secs = Math.floor(seconds % 60);
+                return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }
+
+            // 更新时间和进度条
+            function updateTimeDisplay() {
+                if (!currentVideo) return;
+                const current = currentVideo.currentTime || 0;
+                const duration = currentVideo.duration || 0;
+                timeDisplay.textContent = `${formatTime(current)} / ${formatTime(duration)}`;
+                indexTime.textContent = `${formatTime(current)} / ${formatTime(duration)}`;
+                if (duration > 0) {
+                    indexBarFill.style.width = (current / duration) * 100 + '%';
+                }
+            }
+
+            function updatePlayButtonState() {
+                if (!currentVideo) {
+                    btnPlay.textContent = '▶ 预览';
+                    return;
+                }
+                btnPlay.textContent = currentVideo.paused ? '▶ 预览' : '⏸ 暂停';
+            }
+
+            // 设置当前视频（接管预览区）
+            function setCurrentVideo(videoElement, blobUrl, fileName) {
+                releaseCurrentVideo(); // 清理之前
+                previewArea.innerHTML = ''; // 清空占位/旧元素
+                videoElement.style.width = '100%';
+                videoElement.style.height = '100%';
+                videoElement.style.objectFit = 'contain';
+                videoElement.style.backgroundColor = '#0f0f1a';
+                videoElement.style.borderRadius = '12px';
+                videoElement.controls = true; // 保留控件，方便手动播放
+                previewArea.appendChild(videoElement);
+
+                currentVideo = videoElement;
+                currentVideoUrl = blobUrl;
+                currentFileName = fileName || '未命名';
+
+                // 事件绑定
+                videoElement.addEventListener('loadedmetadata', () => {
+                    updateTimeDisplay();
+                    updatePlayButtonState();
+                });
+                videoElement.addEventListener('timeupdate', updateTimeDisplay);
+                videoElement.addEventListener('play', updatePlayButtonState);
+                videoElement.addEventListener('pause', updatePlayButtonState);
+                videoElement.addEventListener('ended', () => {
+                    updatePlayButtonState();
+                });
+
+                // 按钮点击行为
+                btnPlay.onclick = () => {
+                    if (!currentVideo) return;
+                    if (currentVideo.paused) {
+                        currentVideo.play().catch(e => alert('播放失败：' + e.message));
+                    } else {
+                        currentVideo.pause();
+                    }
+                };
+
+                // 尝试自动播放（由于用户手势触发，通常有效）
+                videoElement.play().catch(() => {
+                    // 自动播放失败（比如未加载完），静默处理，用户可手动点击播放
+                });
+            }
+
+            // 通用播放函数：接受对象 { name, type, data }  data为blob url或null
+            function playMedia(item) {
+                if (!item) return;
+
+                // 非视频或没有数据，显示占位并给出提示
+                if (item.type !== 'video' || !item.data) {
+                    releaseCurrentVideo();
+                    previewArea.innerHTML = `<div class="preview-placeholder">🎬 ${item.name} (无预览画面)</div>`;
+                    timeDisplay.textContent = '00:00 / 00:00';
+                    indexTime.textContent = '00:00 / 00:00';
+                    indexBarFill.style.width = '0%';
+                    btnPlay.onclick = () => alert('当前片段无预览数据');
+                    
+                    // 针对视频类型无数据的示例条目，弹出友好提示
+                    if (item.type === 'video' && !item.data) {
+                        alert('该素材为示例条目，无法预览。请通过“导入素材”按钮添加真实视频。');
+                    }
+                    return;
+                }
+
+                // 视频且data存在
+                const video = document.createElement('video');
+                video.src = item.data;
+                setCurrentVideo(video, item.data, item.name);
+            }
+
+            // ---------- 素材库功能 (导入并存储视频) ----------
+            const assetDropzone = document.getElementById('assetDropzone');
+            const assetListEl = document.getElementById('assetList');
+            const assetTags = document.querySelectorAll('#assetTags .tag');
+
+            // 素材库数据（示例条目 data 设为 null，避免无效路径）
+            let assetItems = [
+                { name: '家长陪伴小朋友玩乐.mp4', type: 'video', data: 'blob:/Users/caiwenwen/Desktop/Code/pro/video/家长陪伴小朋友玩乐.mp4', duration: '00:24', isExample: false },
+                { name: '小朋友们一起搭积木.mp4', type: 'video', data: 'blob:/Users/caiwenwen/Desktop/Codepro/video/小朋友们一起搭积木.mp4', duration: '00:18', isExample: false },
+                { name: '小朋友自己玩耍.mp4', type: 'video', data: 'blob:/Users/caiwenwen/Desktop/Codepro/video/小朋友自己玩耍.mp4', duration: '', isExample: false },
+            ];
+
+            let currentFilter = 'all';
+
+            // 渲染素材库列表
+            function renderAssetList() {
+                const filtered = assetItems.filter(item => 
+                    currentFilter === 'all' || item.type === currentFilter
+                );
+
+                if (filtered.length === 0) {
+                    assetListEl.innerHTML = '<li class="placeholder">暂无素材</li>';
+                    return;
+                }
+
+                assetListEl.innerHTML = filtered.map((item, index) => {
+                    const icon = item.type === 'video' ? '🎬' : (item.type === 'audio' ? '🎵' : '🖼️');
+                    const durationText = item.duration ? ` (${item.duration})` : '';
+                    // 为示例条目添加特殊类
+                    const exampleClass = item.isExample ? 'example-item' : '';
+                    return `<li data-asset-index="${assetItems.indexOf(item)}" class="${exampleClass}">
+                        <span>${icon} ${item.name}${durationText}</span>
+                        <span class="asset-duration"></span>
+                    </li>`;
+                }).join('');
+
+                // 绑定点击事件
+                assetListEl.querySelectorAll('li').forEach(li => {
+                    li.addEventListener('click', (e) => {
+                        const idx = li.dataset.assetIndex;
+                        if (idx !== undefined) {
+                            const item = assetItems[idx];
+                            // 切换到智能检索视图以便预览
+                            switchView('index');
+                            playMedia(item);
+                        }
+                    });
+                });
+            }
+
+            // 处理导入的文件
+            function handleAssetFiles(files) {
+                for (let file of files) {
+                    const type = file.type.split('/')[0]; // 'video', 'audio', 'image'
+                    if (!['video', 'audio', 'image'].includes(type)) continue;
+
+                    const url = URL.createObjectURL(file);
+                    const newItem = {
+                        name: file.name,
+                        type: type,
+                        data: type === 'video' ? url : null,  // 仅视频保留blob url，音频图片仅展示
+                        duration: type === 'video' ? '计算中...' : '',
+                        isExample: false
+                    };
+
+                    // 如果是视频，尝试获取时长
+                    if (type === 'video') {
+                        const tempVideo = document.createElement('video');
+                        tempVideo.preload = 'metadata';
+                        tempVideo.onloadedmetadata = () => {
+                            newItem.duration = formatTime(tempVideo.duration);
+                            // 更新对应项的显示 (直接重新渲染列表)
+                            renderAssetList();
+                            // 注意：不要撤销 url，因为已存储在 newItem.data 中
+                        };
+                        tempVideo.src = url;
+                    }
+
+                    assetItems.push(newItem);
+                }
+                renderAssetList();
+            }
+
+            // 素材库导入: 点击dropzone
+            const assetFileInput = document.createElement('input');
+            assetFileInput.type = 'file';
+            assetFileInput.multiple = true;
+            assetFileInput.accept = 'video/*,audio/*,image/*';
+            assetFileInput.style.display = 'none';
+            document.body.appendChild(assetFileInput);
+
+            assetDropzone.addEventListener('click', () => {
+                assetFileInput.click();
+            });
+
+            assetDropzone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                assetDropzone.style.background = '#2a2a3f';
+            });
+            assetDropzone.addEventListener('dragleave', () => {
+                assetDropzone.style.background = '';
+            });
+            assetDropzone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                assetDropzone.style.background = '';
+                const files = e.dataTransfer.files;
+                if (files.length) handleAssetFiles(files);
+            });
+
+            assetFileInput.addEventListener('change', (e) => {
+                const files = e.target.files;
+                if (files.length) handleAssetFiles(files);
+                assetFileInput.value = ''; // 允许重复导入同文件
+            });
+
+            // 标签切换
+            assetTags.forEach(tag => {
+                tag.addEventListener('click', () => {
+                    assetTags.forEach(t => t.classList.remove('active'));
+                    tag.classList.add('active');
+                    currentFilter = tag.dataset.type;
+                    renderAssetList();
+                });
+            });
+
+            // ---------- 草稿箱功能 ----------
+            let drafts = [];
+            const draftsList = document.getElementById('draftsList');
+            const draftsPlaceholder = document.getElementById('draftsPlaceholder');
+            const clearDraftsBtn = document.getElementById('clearDraftsBtn');
+
+            function renderDrafts() {
+                if (drafts.length === 0) {
+                    draftsList.innerHTML = '';
+                    draftsPlaceholder.style.display = 'block';
+                } else {
+                    draftsPlaceholder.style.display = 'none';
+                    draftsList.innerHTML = drafts.map((draft, index) => `
+                        <li data-draft-index="${index}">
+                            <span class="draft-name">📄 ${draft.name}</span>
+                            <span class="draft-time">${draft.time}</span>
+                        </li>
+                    `).join('');
+
+                    draftsList.querySelectorAll('li').forEach(li => {
+                        li.addEventListener('click', (e) => {
+                            const idx = li.dataset.draftIndex;
+                            if (idx !== undefined) {
+                                const draft = drafts[idx];
+                                switchView('index');
+                                playMedia({ name: draft.name, type: draft.type, data: draft.data });
+                            }
+                        });
+                    });
+                }
+            }
+
+            function addToDrafts(fileName, type = 'video', data = null) {
+                const draft = {
+                    name: fileName,
+                    time: new Date().toLocaleString(),
+                    type: type,
+                    data: data
+                };
+                drafts.push(draft);
+                renderDrafts();
+            }
+
+            function addDraftsBatch(items) {
+                if (!items || items.length === 0) return;
+                const newDrafts = items.map(item => ({
+                    name: item.name,
+                    time: new Date().toLocaleString(),
+                    type: item.type || 'video',
+                    data: item.data || null
+                }));
+                drafts.push(...newDrafts);
+                renderDrafts();
+            }
+
+            clearDraftsBtn.addEventListener('click', function() {
+                drafts = [];
+                renderDrafts();
+                // 同时清除预览区
+                releaseCurrentVideo();
+                previewArea.innerHTML = '<div class="preview-placeholder">导入素材或点击草稿箱/素材库条目播放</div>';
+            });
+
+            // ---------- 智能检索模块 ----------
+            const searchHistory = document.getElementById('searchHistory');
+            const searchResults = document.getElementById('searchResults');
+            const resultsLabel = document.getElementById('resultsLabel');
+            const searchText = document.getElementById('searchText');
+            const btnSearch = document.getElementById('btnSearch');
+            const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+            const clearResultsBtn = document.getElementById('clearResultsBtn');
+            const btnSearchClear = document.getElementById('btnSearchClear');
+            const oneClickBtn = document.getElementById('btnOneClickExport');
+
+            let lastSearchResults = [];
+            let currentSearchQuery = '';
+
+            searchHistory.innerHTML = '<li class="placeholder">无历史记录</li>';
+            searchResults.innerHTML = '<li class="placeholder">空</li>';
+            resultsLabel.textContent = '搜索结果 (共0个片段)';
+
+            function addToHistory(query) {
+                const placeholder = searchHistory.querySelector('.placeholder');
+                if (placeholder) placeholder.remove();
+
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const li = document.createElement('li');
+                li.textContent = `${query} (${timeStr})`;
+                searchHistory.insertBefore(li, searchHistory.firstChild);
+
+                const items = searchHistory.querySelectorAll('li:not(.placeholder)');
+                if (items.length > 3) items[items.length - 1].remove();
+
+                if (searchHistory.children.length === 0) {
+                    searchHistory.innerHTML = '<li class="placeholder">无历史记录</li>';
+                }
+            }
+
+            // 根据关键词在素材库中搜索真实视频
+            function performSearch(query) {
+                currentSearchQuery = query || '';
+                const keyword = query.trim().toLowerCase();
+                // 过滤：视频类型 + 文件名包含关键词
+                lastSearchResults = assetItems.filter(item => 
+                    item.type === 'video' && item.name.toLowerCase().includes(keyword)
+                );
+
+                // 清空并重新渲染搜索结果列表
+                searchResults.innerHTML = '';
+                if (lastSearchResults.length === 0) {
+                    searchResults.innerHTML = '<li class="placeholder">无匹配视频</li>';
+                } else {
+                    lastSearchResults.forEach(item => {
+                        const li = document.createElement('li');
+                        li.textContent = `🎬 ${item.name} (${item.duration || '?'})`;
+                        // 存储对应的素材对象索引
+                        li.dataset.assetIndex = assetItems.indexOf(item);
+                        li.style.cursor = 'pointer';
+                        li.addEventListener('click', (e) => {
+                            const idx = e.currentTarget.dataset.assetIndex;
+                            if (idx !== undefined) {
+                                const targetItem = assetItems[idx];
+                                switchView('index');          // 确保预览视图激活
+                                playMedia(targetItem);
+                            }
+                        });
+                        searchResults.appendChild(li);
+                    });
+                }
+                resultsLabel.textContent = `搜索结果 (共${lastSearchResults.length}个片段)`;
+            }
+
+            btnSearch.addEventListener('click', function() {
+                const query = searchText.value.trim();
+                if (query) addToHistory(query);
+                performSearch(query);
+            });
+
+            clearHistoryBtn.addEventListener('click', function () {
+                searchHistory.innerHTML = '<li class="placeholder">无历史记录</li>';
+            });
+
+            clearResultsBtn.addEventListener('click', function () {
+                searchResults.innerHTML = '<li class="placeholder">空</li>';
+                resultsLabel.textContent = '搜索结果 (共0个片段)';
+                lastSearchResults = [];
+                currentSearchQuery = '';
+            });
+
+            if (btnSearchClear) {
+                btnSearchClear.addEventListener('click', () => { searchText.value = ''; });
+            }
+
+            if (oneClickBtn) {
+                oneClickBtn.onclick = function() {
+                    if (lastSearchResults.length === 0) {
+                        alert('当前没有可导出的搜索结果');
+                        return;
+                    }
+                    // 将 lastSearchResults 中的每个真实素材加入草稿箱（保留 data 以便预览）
+                    addDraftsBatch(lastSearchResults.map(item => ({
+                        name: item.name,
+                        type: 'video',
+                        data: item.data   // 可能是 null（示例）或 blob url（真实素材）
+                    })));
+                    alert(`已导出 ${lastSearchResults.length} 个片段到草稿箱 (点击可预览)`);
+                };
+            }
+
+            // ---------- 智能生成模拟 ----------
+            document.getElementById('btnGenerate')?.addEventListener('click', () => { 
+                alert('智能生成任务已开始 (模拟)'); 
+            });
+
+            // ---------- 预览区导入按钮 (同时添加到素材库) ----------
+            const btnImport = document.getElementById('btnImport');
+            const btnExport = document.getElementById('btnExport');
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = 'video/*';
+            fileInput.style.display = 'none';
+            document.body.appendChild(fileInput);
+
+            btnImport.onclick = function () {
+                fileInput.click();
+            };
+
+            fileInput.addEventListener('change', function (e) {
+                const files = e.target.files;
+                if (!files.length) return;
+
+                // 先添加到素材库（会生成 blob url 并渲染列表）
+                handleAssetFiles(files);
+
+                // 预览第一个文件（直接使用文件创建 blob url）
+                const firstFile = files[0];
+                const url = URL.createObjectURL(firstFile);
+                const video = document.createElement('video');
+                video.src = url;
+                setCurrentVideo(video, url, firstFile.name);
+            });
+
+            btnExport.onclick = function () {
+                if (!currentVideo) {
+                    alert('请先导入视频素材');
+                    return;
+                }
+                const name = currentFileName || '导出视频_' + new Date().toTimeString().slice(0,8);
+                addToDrafts(name, 'video', currentVideoUrl);
+                alert(`已保存“${name}”到草稿箱 (点击可播放)`);
+            };
+
+            // 初始化渲染
+            renderAssetList();
+            renderDrafts();
+            switchView('index');  // 默认显示智能检索
+
+            // 页面卸载时清理所有 blob URL，防止内存泄漏
+            window.addEventListener('beforeunload', function() {
+                // 撤销素材库中所有 blob url
+                assetItems.forEach(item => {
+                    if (item.data && item.data.startsWith('blob:')) {
+                        URL.revokeObjectURL(item.data);
+                    }
+                });
+                // 撤销当前预览视频 url（如果存在且未被覆盖）
+                if (currentVideoUrl) URL.revokeObjectURL(currentVideoUrl);
+            });
+        })();
+    </script>
+</body>
+
+</html>
